@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PilgrimAI – Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Sanskrit&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--saffron:#E8631A;--saffron-light:#FDF0E8;--saffron-dark:#B8480E;--gold:#C9860A;--green:#2E7D32;--green-light:#EAF3E8;--red:#C62828;--red-light:#FEEBEB;--amber:#E65100;--amber-light:#FFF3E0;--cream:#FDF8F2;--white:#FFFFFF;--text:#1A1208;--muted:#7A6A52;--border:rgba(200,140,60,0.18);--shadow:0 2px 16px rgba(100,60,10,0.07);--radius:14px;--radius-sm:8px;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+.sidebar{background:var(--white);border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.main{padding:28px;overflow-y:auto;}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:20px;}
+.sidebar-logo .om{font-family:'Tiro Devanagari Sanskrit',serif;font-size:26px;color:var(--saffron);}
+.sidebar-logo .name{font-size:16px;font-weight:600;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.15s;text-decoration:none;border:none;background:none;width:100%;font-family:inherit;}
+.nav-item:hover,.nav-item.active{background:var(--saffron-light);color:var(--saffron);}
+.nav-icon{font-size:18px;width:22px;text-align:center;}
+.sidebar-footer{margin-top:auto;padding-top:16px;border-top:1px solid var(--border);}
+.user-chip{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--saffron-light);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--saffron);flex-shrink:0;}
+.user-info .uname{font-size:13px;font-weight:600;}
+.user-info .uemail{font-size:11px;color:var(--muted);margin-top:1px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;color:var(--muted);cursor:pointer;border-radius:var(--radius-sm);text-decoration:none;transition:all .15s;margin-top:4px;}
+.logout-btn:hover{background:var(--red-light);color:var(--red);}
+.panel{display:none;}.panel.active{display:block;}
+.page-header{margin-bottom:24px;}
+.page-title{font-size:22px;font-weight:600;letter-spacing:-.4px;}
+.page-sub{font-size:13px;color:var(--muted);margin-top:3px;}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.metric{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+.metric-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;}
+.metric-value{font-size:26px;font-weight:600;letter-spacing:-.5px;}
+.metric-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;}
+.badge-high{background:var(--red-light);color:var(--red);}
+.badge-med{background:var(--amber-light);color:var(--amber);}
+.badge-low{background:var(--green-light);color:var(--green);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);}
+.card-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:16px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:12px;font-weight:500;color:var(--muted);}
+.field select,.field input{padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;background:#FDFAF7;color:var(--text);outline:none;transition:border .2s,box-shadow .2s;}
+.field select:focus,.field input:focus{border-color:var(--saffron);box-shadow:0 0 0 3px rgba(232,99,26,.1);}
+.location-row{grid-column:1/-1;position:relative;}
+.location-input-wrap{position:relative;}
+.location-input-wrap input{padding-left:34px;width:100%;}
+.location-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;}
+.location-suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.1);display:none;}
+.location-suggestions.open{display:block;}
+.suggestion-item{padding:10px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;}
+.suggestion-item:hover{background:var(--saffron-light);}
+.predict-btn{grid-column:1/-1;padding:12px;background:var(--saffron);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .2s,transform .1s;margin-top:4px;}
+.predict-btn:hover{background:var(--saffron-dark);}
+.predict-btn:active{transform:scale(.98);}
+.result-panel{margin-top:16px;padding:16px;background:var(--cream);border-radius:var(--radius-sm);border:1px solid var(--border);display:none;}
+.result-panel.show{display:block;}
+.result-crowd{font-size:32px;font-weight:700;letter-spacing:-.8px;}
+.result-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+.result-meta{font-size:13px;color:var(--muted);}
+.gate-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.gate-item:last-child{border:none;}
+.gate-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.gate-name{font-size:13px;font-weight:500;flex:1;}
+.gate-bar-wrap{width:80px;height:6px;background:#F0E8DC;border-radius:3px;overflow:hidden;}
+.gate-bar{height:100%;border-radius:3px;transition:width .6s;}
+.gate-wait{font-size:12px;color:var(--muted);width:40px;text-align:right;}
+.alert-item{display:flex;gap:10px;padding:12px;border-radius:var(--radius-sm);margin-bottom:10px;font-size:13px;}
+.alert-item:last-child{margin:0;}
+.alert-dot-ring{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.alert-high{background:var(--red-light);color:var(--red);}
+.alert-medium{background:var(--amber-light);color:var(--amber);}
+.alert-low{background:var(--green-light);color:var(--green);}
+.chart-wrap{position:relative;height:220px;}
+.chat-wrap{display:flex;flex-direction:column;height:420px;}
+.chat-messages{flex:1;overflow-y:auto;padding:4px 0;display:flex;flex-direction:column;gap:12px;}
+.msg{max-width:80%;padding:11px 14px;border-radius:12px;font-size:13px;line-height:1.5;}
+.msg-bot{background:#F5EFE6;color:var(--text);align-self:flex-start;border-bottom-left-radius:3px;}
+.msg-user{background:var(--saffron);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;}
+.msg-sender{font-size:11px;color:var(--muted);margin-bottom:2px;}
+.chat-input-row{display:flex;gap:8px;padding-top:14px;border-top:1px solid var(--border);margin-top:12px;}
+.chat-input{flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;outline:none;background:#FDFAF7;}
+.chat-input:focus{border-color:var(--saffron);}
+.chat-send{padding:10px 16px;background:var(--saffron);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:15px;transition:background .2s;}
+.chat-send:hover{background:var(--saffron-dark);}
+.quick-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.chip{padding:5px 12px;border:1px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;background:var(--white);color:var(--muted);transition:all .15s;font-family:inherit;}
+.chip:hover{border-color:var(--saffron);color:var(--saffron);background:var(--saffron-light);}
+.history-table{width:100%;border-collapse:collapse;font-size:13px;}
+.history-table th{text-align:left;padding:10px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border);}
+.history-table td{padding:12px;border-bottom:1px solid var(--border);}
+.history-table tr:last-child td{border:none;}
+.history-table tr:hover td{background:var(--cream);}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}.sidebar{position:fixed;left:-260px;top:0;bottom:0;width:240px;z-index:200;transition:left .25s;}.sidebar.open{left:0;box-shadow:8px 0 40px rgba(0,0,0,.15);}.main{padding:20px 16px;}.metrics{grid-template-columns:1fr 1fr;}.grid-2{grid-template-columns:1fr;}.mobile-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}.hamburger{font-size:22px;cursor:pointer;padding:4px;}}
+@media(min-width:901px){.mobile-header{display:none;}}
+@media(max-width:600px){.metrics{grid-template-columns:1fr 1fr;}.form-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="om">ॐ</div>
+      <div class="name">PilgrimAI</div>
+    </div>
+    <button class="nav-item active" onclick="showPanel('predict',this)"><span class="nav-icon">🔮</span> Predict Crowd</button>
+    <button class="nav-item" onclick="showPanel('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</button>
+    <button class="nav-item" onclick="showPanel('chatbot',this)"><span class="nav-icon">🤖</span> AI Assistant</button>
+    <button class="nav-item" onclick="showPanel('history',this)"><span class="nav-icon">🕐</span> My History</button>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar" id="s-av">?</div>
+        <div class="user-info">
+          <div class="uname" id="s-name">{{ user.name }}</div>
+          <div class="uemail" id="s-email">{{ user.email }}</div>
+        </div>
+      </div>
+      <a class="logout-btn" href="/logout"><span>🚪</span> Sign out</a>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="mobile-header">
+      <span class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</span>
+      <strong>PilgrimAI</strong>
+    </div>
+
+    <!-- PREDICT -->
+    <div class="panel active" id="panel-predict">
+      <div class="page-header"><div class="page-title">Crowd Prediction</div><div class="page-sub">AI-powered forecast for your pilgrimage site</div></div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Predicted Crowd</div><div class="metric-value" id="m-crowd">—</div><div class="metric-sub">pilgrims expected</div></div>
+        <div class="metric"><div class="metric-label">Crowd Level</div><div class="metric-value" style="font-size:15px;margin-top:6px;" id="m-level"><span style="color:var(--muted)">—</span></div></div>
+        <div class="metric"><div class="metric-label">Est. Wait Time</div><div class="metric-value" id="m-wait">—</div><div class="metric-sub">minutes at main gate</div></div>
+        <div class="metric"><div class="metric-label">Entry Rate</div><div class="metric-value">420</div><div class="metric-sub">pilgrims/hr/gate</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">⚙️ Input Parameters</div>
+          <div class="form-grid">
+            <div class="field location-row">
+              <label>📍 Pilgrimage Location</label>
+              <div class="location-input-wrap">
+                <span class="location-icon">📍</span>
+                <input type="text" id="loc-input" placeholder="e.g. Kashi Vishwanath, Tirupati..." autocomplete="off" oninput="onLocInput()" />
+              </div>
+              <div class="location-suggestions" id="loc-sug"></div>
+            </div>
+            <div class="field"><label>Day of Week</label>
+              <select id="p-day"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select>
+            </div>
+            <div class="field"><label>Month</label>
+              <select id="p-month"><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select>
+            </div>
+            <div class="field"><label>Festival / Holiday</label>
+              <select id="p-festival"><option value="none">No festival</option><option value="minor">Minor festival</option><option value="major">Major festival</option></select>
+            </div>
+            <div class="field"><label>Weather</label>
+              <select id="p-weather"><option>Pleasant</option><option>Cold</option><option>Hot</option><option>Very Hot</option><option>Rainy</option><option>Stormy</option><option>Foggy</option><option>Cool</option></select>
+            </div>
+            <button class="predict-btn" id="pred-btn" onclick="runPredict()">🔮 Run AI Prediction</button>
+          </div>
+          <div class="result-panel" id="result-panel">
+            <div class="result-crowd" id="r-crowd">—</div>
+            <div class="result-row"><span id="r-badge"></span><span class="result-meta" id="r-wait">—</span></div>
+            <div class="result-meta" style="margin-top:8px;" id="r-loc"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🚨 Smart Alerts</div>
+          <div id="alerts-box"><div class="alert-item alert-low"><div class="alert-dot-ring" style="background:var(--green)"></div><div>Run a prediction to see personalized alerts.</div></div></div>
+          <div style="margin-top:18px;"><div class="card-title">🚪 Gate Status</div><div id="gates-list"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="panel" id="panel-dashboard">
+      <div class="page-header"><div class="page-title">Live Dashboard</div><div class="page-sub">Hourly trends and gate capacity</div></div>
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-title">📈 Hourly Footfall Forecast — Today</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--muted);">
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#E8631A;display:inline-block;"></span>Predicted</span>
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#2E7D32;display:inline-block;"></span>Actual (so far)</span>
+        </div>
+        <div class="chart-wrap"><canvas id="hourlyChart"></canvas></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-title">📅 Weekly Trend</div><div class="chart-wrap"><canvas id="weeklyChart"></canvas></div></div>
+        <div class="card"><div class="card-title">🚪 All Gates — Live Capacity</div><div id="all-gates"></div></div>
+      </div>
+    </div>
+
+    <!-- CHATBOT -->
+    <div class="panel" id="panel-chatbot">
+      <div class="page-header"><div class="page-title">AI Pilgrimage Assistant</div><div class="page-sub">Ask me about crowds, waits, gates, and planning</div></div>
+      <div class="card">
+        <div class="quick-chips">
+          <button class="chip" onclick="sendChip('Best time to visit?')">⏱ Best time?</button>
+          <button class="chip" onclick="sendChip('How is wait time calculated?')">🧮 Wait time formula</button>
+          <button class="chip" onclick="sendChip('Tell me about festival crowd')">🎉 Festival crowd</button>
+          <button class="chip" onclick="sendChip('Which gate should I use?')">🚪 Which gate?</button>
+          <button class="chip" onclick="sendChip('How does location affect crowd?')">📍 Location impact</button>
+          <button class="chip" onclick="sendChip('Weather impact on pilgrims')">🌤 Weather</button>
+        </div>
+        <div class="chat-wrap">
+          <div class="chat-messages" id="chat-msgs">
+            <div><div class="msg-sender">🤖 AI Assistant</div><div class="msg msg-bot">Namaste! 🙏 I'm your Pilgrimage Planning Assistant. Ask me about crowd predictions, best timings, gate recommendations, or festival impacts!</div></div>
+          </div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chat-in" type="text" placeholder="Ask anything..." onkeydown="if(event.key==='Enter')sendChat()" />
+            <button class="chat-send" onclick="sendChat()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="panel" id="panel-history">
+      <div class="page-header"><div class="page-title">My Search History</div><div class="page-sub">Your recent crowd predictions</div></div>
+      <div class="card">
+        <table class="history-table">
+          <thead><tr><th>Date</th><th>Location</th><th>Day</th><th>Festival</th><th>Weather</th><th>Crowd</th><th>Level</th><th>Wait</th></tr></thead>
+          <tbody id="hist-body"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// Init user
+const uname = document.getElementById('s-name').textContent;
+document.getElementById('s-av').textContent = uname ? uname[0].toUpperCase() : '?';
+
+// Nav
+function showPanel(name, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='history') loadHistory();
+  if(name==='dashboard') initCharts();
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// Location
+const LOCS=['Kashi Vishwanath, Varanasi','Tirupati Balaji, Andhra Pradesh','Vaishno Devi, Jammu','Golden Temple, Amritsar','Shirdi Sai Baba, Maharashtra','Kedarnath, Uttarakhand','Badrinath, Uttarakhand','Puri Jagannath, Odisha','Ajmer Sharif Dargah','Somnath Temple, Gujarat','Mathura Vrindavan, UP','Dwarka Temple, Gujarat','Rameshwaram, Tamil Nadu','Char Dham, Uttarakhand','Haridwar Har Ki Pauri','Mahakaleshwar, Ujjain'];
+function onLocInput(){
+  const v=document.getElementById('loc-input').value.toLowerCase();
+  const box=document.getElementById('loc-sug');
+  if(!v){box.classList.remove('open');return;}
+  const m=LOCS.filter(l=>l.toLowerCase().includes(v)).slice(0,5);
+  if(!m.length){box.classList.remove('open');return;}
+  box.innerHTML=m.map(l=>`<div class="suggestion-item" onclick="pickLoc('${l}')">📍 ${l}</div>`).join('');
+  box.classList.add('open');
+}
+function pickLoc(l){document.getElementById('loc-input').value=l;document.getElementById('loc-sug').classList.remove('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.location-input-wrap'))document.getElementById('loc-sug').classList.remove('open');});
+
+// Gates
+const GATES=[{n:'Gate 1 — Main Entry',c:92,w:68},{n:'Gate 2 — North Wing',c:55,w:28},{n:'Gate 3 — East Wing',c:28,w:12},{n:'Gate 4 — South',c:60,w:34},{n:'Gate 5 — VIP/Divyang',c:18,w:8},{n:'Gate 6 — Exit Only',c:12,w:5}];
+function gateColor(c){return c>80?'#C62828':c>55?'#E65100':'#2E7D32';}
+function renderGates(id,mult=1){
+  document.getElementById(id).innerHTML=GATES.map(g=>{
+    const cap=Math.min(99,Math.round(g.c*mult));
+    const col=gateColor(cap);
+    return `<div class="gate-item"><div class="gate-dot" style="background:${col}"></div><div class="gate-name">${g.n}</div><div class="gate-bar-wrap"><div class="gate-bar" style="width:${cap}%;background:${col}"></div></div><div class="gate-wait">${g.w}m</div></div>`;
+  }).join('');
+}
+renderGates('gates-list');
+renderGates('all-gates');
+
+// Predict
+async function runPredict(){
+  const btn=document.getElementById('pred-btn');
+  btn.innerHTML='<span class="spinner"></span> Predicting…';
+  const body={day:document.getElementById('p-day').value,month:document.getElementById('p-month').value,festival:document.getElementById('p-festival').value,weather:document.getElementById('p-weather').value,location:document.getElementById('loc-input').value};
+  try{
+    const res=await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await res.json();
+    const cls=d.level==='High'?'badge-high':d.level==='Medium'?'badge-med':'badge-low';
+    document.getElementById('m-crowd').textContent=d.crowd.toLocaleString();
+    document.getElementById('m-level').innerHTML=`<span class="badge ${cls}">${d.level.toUpperCase()}</span>`;
+    document.getElementById('m-wait').textContent=d.wait_time+' min';
+    document.getElementById('r-crowd').textContent=d.crowd.toLocaleString()+' pilgrims';
+    document.getElementById('r-badge').innerHTML=`<span class="badge ${cls}">${d.level.toUpperCase()}</span>`;
+    document.getElementById('r-wait').textContent='Est. wait: '+d.wait_time+' min';
+    document.getElementById('r-loc').textContent=body.location?'📍 '+body.location:'';
+    document.getElementById('result-panel').classList.add('show');
+    updateAlerts(d.level,d.crowd,body.location);
+    renderGates('gates-list',d.level==='High'?1.3:d.level==='Medium'?1.0:0.6);
+  }catch(e){alert('Make sure Flask server is running on port 5000');}
+  btn.textContent='🔮 Run AI Prediction';
+}
+
+function updateAlerts(level,crowd,loc){
+  const a=[];
+  if(level==='High'){
+    a.push(['alert-high','🚨',`<strong>HIGH CROWD ALERT:</strong> ${crowd.toLocaleString()} pilgrims expected. Avoid Gate 1 — use Gate 3 or Gate 5.`]);
+    a.push(['alert-medium','⚠️','<strong>Long wait ahead.</strong> Arrive before 6 AM or after 8 PM for shortest queues.']);
+  }else if(level==='Medium'){
+    a.push(['alert-medium','⚠️',`<strong>MODERATE CROWD:</strong> ${crowd.toLocaleString()} pilgrims expected. Gate 2 & Gate 4 recommended.`]);
+    a.push(['alert-low','✅','<strong>Morning slot (5–7 AM)</strong> will have the shortest wait today.']);
+  }else{
+    a.push(['alert-low','✅',`<strong>LOW CROWD:</strong> Only ${crowd.toLocaleString()} pilgrims expected. All gates clear!`]);
+    a.push(['alert-low','✅','<strong>Great day to visit.</strong> No diversion or waiting expected.']);
+  }
+  if(loc) a.push(['alert-low','📍',`<strong>Location adjusted:</strong> Prediction calibrated for ${loc}.`]);
+  document.getElementById('alerts-box').innerHTML=a.map(([cls,ic,msg])=>`<div class="alert-item ${cls}"><div class="alert-dot-ring" style="background:currentColor;opacity:.6"></div><div>${ic} ${msg}</div></div>`).join('');
+}
+
+// Chatbot
+async function sendChat(){
+  const inp=document.getElementById('chat-in');
+  const msg=inp.value.trim();if(!msg)return;inp.value='';
+  addMsg(msg,'user');
+  const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+  const d=await res.json();
+  setTimeout(()=>addMsg(d.reply,'bot'),400);
+}
+function sendChip(m){document.getElementById('chat-in').value=m;sendChat();}
+function addMsg(text,who){
+  const box=document.getElementById('chat-msgs');
+  const d=document.createElement('div');
+  d.innerHTML=`<div class="msg-sender">${who==='user'?'👤 You':'🤖 AI Assistant'}</div><div class="msg msg-${who}">${text}</div>`;
+  box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+
+// History
+async function loadHistory(){
+  const res=await fetch('/api/history');const data=await res.json();
+  const tb=document.getElementById('hist-body');
+  if(!data.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">No predictions yet. Run your first prediction!</td></tr>';return;}
+  const cls=l=>l==='High'?'badge-high':l==='Medium'?'badge-med':'badge-low';
+  tb.innerHTML=data.map(r=>`<tr><td>${r.date}</td><td>${r.location||'—'}</td><td>${r.day}</td><td>${r.festival}</td><td>${r.weather}</td><td><strong>${(r.crowd||0).toLocaleString()}</strong></td><td><span class="badge ${cls(r.level)}">${r.level}</span></td><td>${r.wait} min</td></tr>`).join('');
+}
+
+// Charts
+let chartsInited=false;
+function initCharts(){
+  if(chartsInited)return;chartsInited=true;
+  const hrs=['4AM','5AM','6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM','9PM'];
+  const pred=[2800,4200,5800,6100,5200,4400,3600,3100,2900,2800,2700,2900,3400,4100,5900,6800,5200,3100];
+  const act=[2650,4050,5700,6000,5350,4500,3700,3000,2850,null,null,null,null,null,null,null,null,null];
+  new Chart(document.getElementById('hourlyChart'),{type:'bar',data:{labels:hrs,datasets:[{label:'Predicted',data:pred,backgroundColor:'#E8631A',borderRadius:3},{label:'Actual',data:act,backgroundColor:'#2E7D32',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#999'}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:10},color:'#999',callback:v=>(v/1000).toFixed(0)+'k'}}}}});
+  new Chart(document.getElementById('weeklyChart'),{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Footfall',data:[12000,10500,11000,10800,14000,19000,21000],borderColor:'#E8631A',backgroundColor:'rgba(232,99,26,0.08)',tension:0.4,fill:true,pointBackgroundColor:'#E8631A',pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#999'}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:11},color:'#999',callback:v=>(v/1000).toFixed(0)+'k'}}}}});
+}
+
+// Defaults
+document.getElementById('p-month').value=new Date().getMonth()+1;
+document.getElementById('p-day').value=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+</script>
+</body>
+</html>

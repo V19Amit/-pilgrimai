@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PilgrimAI – Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Sanskrit&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --saffron: #E8631A;
+    --saffron-light: #FDF0E8;
+    --saffron-dark: #B8480E;
+    --gold: #C9860A;
+    --cream: #FDF6EC;
+    --text: #1A1410;
+    --muted: #7A6A58;
+    --border: rgba(200,140,60,0.25);
+    --error: #C0392B;
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(232,99,26,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(201,134,10,0.07) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .mandala-bg {
+    position: fixed;
+    right: -120px; top: -120px;
+    width: 480px; height: 480px;
+    opacity: 0.04;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='90' fill='none' stroke='%23E8631A' stroke-width='2'/%3E%3Ccircle cx='100' cy='100' r='70' fill='none' stroke='%23E8631A' stroke-width='1.5'/%3E%3Ccircle cx='100' cy='100' r='50' fill='none' stroke='%23E8631A' stroke-width='1'/%3E%3Cpath d='M100 10 L110 90 L190 100 L110 110 L100 190 L90 110 L10 100 L90 90 Z' fill='none' stroke='%23E8631A' stroke-width='1.5'/%3E%3C/svg%3E") center/cover;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    padding: 40px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 8px 40px rgba(232,99,26,0.08);
+  }
+  .logo { text-align: center; margin-bottom: 32px; }
+  .logo-om { font-family: 'Tiro Devanagari Sanskrit', serif; font-size: 36px; color: var(--saffron); line-height: 1; }
+  .logo-name { font-size: 22px; font-weight: 500; color: var(--text); margin-top: 6px; letter-spacing: -0.3px; }
+  .logo-tagline { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .tabs { display: flex; background: #F5EFE6; border-radius: 10px; padding: 4px; margin-bottom: 28px; }
+  .tab { flex: 1; padding: 9px; text-align: center; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: 7px; transition: all 0.2s; color: var(--muted); border: none; background: none; font-family: inherit; }
+  .tab.active { background: #fff; color: var(--saffron); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .form-panel { display: none; }
+  .form-panel.active { display: block; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 11px 14px; border: 1px solid var(--border);
+    border-radius: 10px; font-size: 14px; font-family: inherit;
+    background: #FDFAF7; color: var(--text); transition: border 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--saffron); box-shadow: 0 0 0 3px rgba(232,99,26,0.10); }
+  .btn-primary {
+    width: 100%; padding: 12px; background: var(--saffron); color: #fff;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 500;
+    font-family: inherit; cursor: pointer; transition: background 0.2s, transform 0.1s;
+    margin-top: 4px;
+  }
+  .btn-primary:hover { background: var(--saffron-dark); }
+  .btn-primary:active { transform: scale(0.98); }
+  .error-msg { background: #FEF0EE; color: var(--error); font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; display: none; border: 1px solid rgba(192,57,43,0.2); }
+  .error-msg.show { display: block; }
+  .divider { text-align: center; font-size: 12px; color: var(--muted); margin: 20px 0; position: relative; }
+  .divider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--border); }
+  .divider span { position: relative; background: #fff; padding: 0 12px; }
+  .hint { font-size: 12px; color: var(--muted); text-align: center; margin-top: 20px; }
+  .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="mandala-bg"></div>
+<div class="card">
+  <div class="logo">
+    <div class="logo-om">ॐ</div>
+    <div class="logo-name">PilgrimAI</div>
+    <div class="logo-tagline">Smart Crowd Prediction for Sacred Sites</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('login')">Sign In</button>
+    <button class="tab" onclick="switchTab('signup')">Create Account</button>
+  </div>
+
+  <div class="form-panel active" id="login-panel">
+    <div class="error-msg" id="login-error"></div>
+    <div class="field">
+      <label>Email address</label>
+      <input type="email" id="login-email" placeholder="your@email.com" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••" />
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Sign In</button>
+    <div class="hint">Don't have an account? <a href="#" onclick="switchTab('signup')" style="color:var(--saffron);">Sign up free</a></div>
+  </div>
+
+  <div class="form-panel" id="signup-panel">
+    <div class="error-msg" id="signup-error"></div>
+    <div class="field">
+      <label>Full name</label>
+      <input type="text" id="signup-name" placeholder="Your name" />
+    </div>
+    <div class="field">
+      <label>Email address</label>
+      <input type="email" id="signup-email" placeholder="your@email.com" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="signup-pass" placeholder="Min. 6 characters" />
+    </div>
+    <button class="btn-primary" onclick="doSignup()">Create Account</button>
+    <div class="hint">Already registered? <a href="#" onclick="switchTab('login')" style="color:var(--saffron);">Sign in</a></div>
+  </div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='signup')));
+  document.getElementById('login-panel').classList.toggle('active', tab==='login');
+  document.getElementById('signup-panel').classList.toggle('active', tab==='signup');
+}
+async function doLogin() {
+  const btn = event.target;
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+  err.classList.remove('show');
+  btn.innerHTML = '<span class="loader"></span>';
+  const res = await fetch('/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
+  const data = await res.json();
+  if (data.success) { window.location.href = '/dashboard'; }
+  else { err.textContent = data.error; err.classList.add('show'); btn.textContent = 'Sign In'; }
+}
+async function doSignup() {
+  const btn = event.target;
+  const name = document.getElementById('signup-name').value;
+  const email = document.getElementById('signup-email').value;
+  const password = document.getElementById('signup-pass').value;
+  const err = document.getElementById('signup-error');
+  err.classList.remove('show');
+  if (password.length < 6) { err.textContent = 'Password must be at least 6 characters'; err.classList.add('show'); return; }
+  btn.innerHTML = '<span class="loader"></span>';
+  const res = await fetch('/signup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name,email,password}) });
+  const data = await res.json();
+  if (data.success) { window.location.href = '/dashboard'; }
+  else { err.textContent = data.error; err.classList.add('show'); btn.textContent = 'Create Account'; }
+}
+document.addEventListener('keydown', e => { if(e.key==='Enter') { if(document.getElementById('login-panel').classList.contains('active')) doLogin(); else doSignup(); }});
+</script>
+</body>
+</html>
