@@ -5,16 +5,23 @@ import pickle, os, numpy as np
 from datetime import datetime
 from functools import wraps
 
-# ── Paths — works locally AND on Railway/Render ────────────────────────────────
+# ── Paths — works locally AND on Render ───────────────────────────────────────
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 TMPL_DIR  = os.path.join(BASE_DIR, "templates")
 DATA_DIR  = os.path.join(BASE_DIR, "data")
 
 app = Flask(__name__, template_folder=TMPL_DIR)
 app.secret_key = os.environ.get("SECRET_KEY", "pilgrimage_secret_key_2024")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    "DATABASE_URL", "sqlite:///" + os.path.join(BASE_DIR, "pilgrimage.db")
+
+# ── Fix Render's postgres:// → postgresql:// ──────────────────────────────────
+database_url = os.environ.get(
+    "DATABASE_URL",
+    "sqlite:///" + os.path.join(BASE_DIR, "pilgrimage.db")
 )
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
@@ -34,16 +41,16 @@ class User(db.Model):
     searches      = db.relationship("SearchHistory", backref="user", lazy=True)
 
 class SearchHistory(db.Model):
-    id             = db.Column(db.Integer, primary_key=True)
-    user_id        = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    location       = db.Column(db.String(200))
-    day            = db.Column(db.String(20))
-    festival       = db.Column(db.String(50))
-    weather        = db.Column(db.String(30))
-    predicted_crowd= db.Column(db.Integer)
-    crowd_level    = db.Column(db.String(20))
-    wait_time      = db.Column(db.Integer)
-    created_at     = db.Column(db.DateTime, default=datetime.utcnow)
+    id              = db.Column(db.Integer, primary_key=True)
+    user_id         = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    location        = db.Column(db.String(200))
+    day             = db.Column(db.String(20))
+    festival        = db.Column(db.String(50))
+    weather         = db.Column(db.String(30))
+    predicted_crowd = db.Column(db.Integer)
+    crowd_level     = db.Column(db.String(20))
+    wait_time       = db.Column(db.Integer)
+    created_at      = db.Column(db.DateTime, default=datetime.utcnow)
 
 # ── Auth decorator ─────────────────────────────────────────────────────────────
 def login_required(f):
@@ -73,7 +80,7 @@ def predict_crowd(day, festival, weather, month, location=""):
     is_weekend   = 1 if day in ["Saturday", "Sunday"] else 0
     festival_num = FESTIVAL_ORDER.index(festival) if festival in FESTIVAL_ORDER else 0
     weather_num  = WEATHER_ORDER.index(weather) if weather in WEATHER_ORDER else 5
-    X = np.array([[day_num, month, is_weekend, festival_num, weather_num]])
+    X     = np.array([[day_num, month, is_weekend, festival_num, weather_num]])
     crowd = int(model.predict(X)[0])
     loc   = location.lower().strip()
     mult  = next((v for k, v in LOCATION_MULTIPLIERS.items() if k in loc), 1.0)
@@ -205,8 +212,10 @@ def api_history():
 def health():
     return jsonify({"status": "ok", "app": "PilgrimAI"})
 
+# ── Create tables & run ───────────────────────────────────────────────────────
+with app.app_context():
+    db.create_all()  # ✅ Runs on Render with gunicorn too
+
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
